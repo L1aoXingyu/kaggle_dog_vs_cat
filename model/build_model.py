@@ -34,7 +34,7 @@
 #
 #
 # # In[7]:
-# 
+#
 # b = y_train[:]
 
 
@@ -290,6 +290,3 @@ train_generator = train_image.flow_from_directory('../data/train/', target_size=
 # In[ ]:
 
 inception_model.fit_generator(train_generator, steps_per_epoch=25000//batch_size, epochs=10, verbose=1)
-
-
-# In[ ]:

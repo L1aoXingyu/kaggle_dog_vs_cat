@@ -1,1 +1,4 @@
-# kaggle_dog_vs_cat
+# kaggle competition
+## dog vs cat
+
+This is my first competition in Kaggle.

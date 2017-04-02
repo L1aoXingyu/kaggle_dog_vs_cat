@@ -1,24 +1,68 @@
 
-import h5py
+# coding: utf-8
 
-f = h5py.File('../data/train/trian_data.hdf5', 'r')
+# ### load data
 
-x_train = f.get('train_data')
+# In[1]:
 
-y_train = f.get('y_train_data')
+# import h5py
+#
+#
+# # In[2]:
+#
+# f = h5py.File('../data/train/trian_data.hdf5', 'r')
+#
+#
+# # In[3]:
+#
+# x_train = f.get('train_data')
+#
+#
+# # In[4]:
+#
+# y_train = f.get('y_train_data')
+#
+#
+# # In[5]:
+#
+# type(x_train)
+
+
+# In[6]:
+
+# a = x_train[:]
+#
+#
+# # In[7]:
+# 
+# b = y_train[:]
+
+
+# ### build model
+
+# In[8]:
 
 import keras
+
+
+# In[9]:
 
 from keras.layers import Activation, MaxPooling2D, Conv2D, Dense, Input, Dropout, Flatten, BatchNormalization, AveragePooling2D
 from keras.models import Model
 from keras import layers
 from keras import optimizers
 
+
+# In[10]:
+
 def conv2d_bn(x, filters, num_row, num_col, padding='same', strides=(1, 1)):
     x = Conv2D(filters, (num_row, num_col), strides=strides, padding=padding, use_bias=False)(x)
     x = BatchNormalization(axis=-1)(x)
     x = Activation('relu')(x)
     return x
+
+
+# In[40]:
 
 def InceptionV3(img_input):
     x = conv2d_bn(img_input, 32, 3, 3, strides=(2, 2), padding='valid')
@@ -189,22 +233,63 @@ def InceptionV3(img_input):
             axis=-1)
     x = AveragePooling2D(5, 1, 'valid')(x)
     x = Flatten()(x)
-    x = Dense(2)(x)
+    x = Dense(1)(x)
     model = Model(inputs=img_input, outputs=x)
     return model
+
+
+# In[41]:
 
 input_tensor = Input(shape=(224, 224, 3))
 inception_model = InceptionV3(input_tensor)
 
+
+# In[13]:
+
 from keras.utils.vis_utils import model_to_dot
+
+
+# In[14]:
 
 mymodel = model_to_dot(inception_model, show_shapes=True)
 
+
+# In[15]:
+
 # mymodel.write_png('./model.png')
 
+
+# In[42]:
+
 sgd = optimizers.SGD(lr=0.001, decay=1e-6, momentum=0.9, nesterov=True)
-inception_model.compile(optimizer=sgd, loss='categorical_crossentropy', metrics=['accuracy'])
+inception_model.compile(optimizer=sgd, loss='binary_crossentropy', metrics=['accuracy'])
+
+
+# In[55]:
 
 batch_size = 32
 
-inception_model.fit(x_train, y_train, batch_size=batch_size, epochs=20, verbose=1, validation_split=0.1)
+
+# In[44]:
+
+from keras.preprocessing.image import ImageDataGenerator
+
+
+# In[45]:
+
+train_image = ImageDataGenerator(rescale=1./255)
+
+
+# In[56]:
+
+train_generator = train_image.flow_from_directory('../data/train/', target_size=(224, 224),
+                                                 batch_size=batch_size,
+                                                 class_mode='binary')
+
+
+# In[ ]:
+
+inception_model.fit_generator(train_generator, steps_per_epoch=25000//batch_size, epochs=10, verbose=1)
+
+
+# In[ ]:

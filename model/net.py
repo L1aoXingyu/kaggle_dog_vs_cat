@@ -35,7 +35,6 @@ class classifier(nn.Module):
     def __init__(self, dim, n_classes):
         super(classifier, self).__init__()
         self.fc = nn.Sequential(
-            nn.Dropout(0.5),
             nn.Linear(dim, 1000),
             nn.ReLU(True),
             nn.Dropout(0.5),

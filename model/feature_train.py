@@ -19,8 +19,8 @@ parse.add_argument(
     help='inceptionv3, vgg, resnet152',
     default=['vgg', 'inceptionv3', 'resnet152'])
 parse.add_argument('--batch_size', type=int, default=64)
-parse.add_argument('--epoch', type=int, default=100)
-parse.add_argument('--n_classes', required=True, type=int)
+parse.add_argument('--epoch', type=int, default=20)
+parse.add_argument('--n_classes', default=2, type=int)
 parse.add_argument('--num_workers', type=int, default=8)
 opt = parse.parse_args()
 print(opt)

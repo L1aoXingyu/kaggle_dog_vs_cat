@@ -2,6 +2,7 @@ __author__ = 'SherlockLiao'
 
 import argparse
 import time
+import os
 
 import torch
 from torch import nn

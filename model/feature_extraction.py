@@ -15,11 +15,10 @@ from torch.utils.data import DataLoader
 from net import feature_net, classifier
 
 parse = argparse.ArgumentParser()
-parse.add_argument('--model', required=True,
-                   help='vgg, inceptionv3, resnet152')
+parse.add_argument(
+    '--model', required=True, help='vgg, inceptionv3, resnet152')
 parse.add_argument('--bs', type=int, default=32)
-parse.add_argument('--phase', required=True,
-                   help='train, val')
+parse.add_argument('--phase', required=True, help='train, val')
 opt = parse.parse_args()
 print(opt)
 
@@ -30,21 +29,27 @@ img_transform = transforms.Compose([
     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
 ])
 
-root = '/home/sherlock/Documents/kaggle_dog_vs_cat/data'
+root = '/media/sherlock/Files/kaggle_dog_vs_cat/data'
 data_folder = {
-    'train': ImageFolder(os.path.join(root, 'train'),
-                         transform=img_transform),
-    'val': ImageFolder(os.path.join(root, 'val'),
-                       transform=img_transform)
+    'train': ImageFolder(os.path.join(root, 'train'), transform=img_transform),
+    'val': ImageFolder(os.path.join(root, 'val'), transform=img_transform)
 }
 
 # define dataloader to load images
 batch_size = opt.bs
 dataloader = {
-    'train': DataLoader(data_folder['train'], batch_size=batch_size,
-                        shuffle=True, num_workers=4),
-    'val': DataLoader(data_folder['val'], batch_size=batch_size,
-                      num_workers=4)
+    'train':
+    DataLoader(
+        data_folder['train'],
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=4),
+    'val':
+    DataLoader(
+        data_folder['val'],
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=4)
 }
 
 # get train data size and validation data size

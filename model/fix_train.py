@@ -12,13 +12,15 @@ from torch.utils.data import DataLoader
 
 # define image transforms to do data augumentation
 data_transforms = {
-    'train': transforms.Compose([
+    'train':
+    transforms.Compose([
         transforms.RandomSizedCrop(299),
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     ]),
-    'val': transforms.Compose([
+    'val':
+    transforms.Compose([
         transforms.Scale(320),
         transforms.CenterCrop(299),
         transforms.ToTensor(),
@@ -27,21 +29,27 @@ data_transforms = {
 }
 
 # define data folder using ImageFolder to get images and classes from folder
-root = '/home/sherlock/Documents/kaggle_dog_vs_cat/data'
+root = '/media/sherlock/Files/kaggle_dog_vs_cat/'
 data_folder = {
-    'train': ImageFolder(os.path.join(root, 'train'),
-                         transform=data_transforms['train']),
-    'val': ImageFolder(os.path.join(root, 'val'),
-                       transform=data_transforms['val'])
+    'train':
+    ImageFolder(
+        os.path.join(root, 'data/train'), transform=data_transforms['train']),
+    'val':
+    ImageFolder(
+        os.path.join(root, 'data/val'), transform=data_transforms['val'])
 }
 
 # define dataloader to load images
 batch_size = 32
 dataloader = {
-    'train': DataLoader(data_folder['train'], batch_size=batch_size,
-                        shuffle=True, num_workers=4),
-    'val': DataLoader(data_folder['val'], batch_size=batch_size,
-                      num_workers=4)
+    'train':
+    DataLoader(
+        data_folder['train'],
+        batch_size=batch_size,
+        shuffle=True,
+        num_workers=4),
+    'val':
+    DataLoader(data_folder['val'], batch_size=batch_size, num_workers=4)
 }
 
 # get train data size and validation data size
@@ -55,24 +63,30 @@ img_classes = len(dataloader['train'].dataset.classes)
 
 # test if using GPU
 use_gpu = torch.cuda.is_available()
-
+fix_param = True
 # define model
 transfer_model = models.resnet18(pretrained=True)
+if fix_param:
+    for param in transfer_model.parameters():
+        param.requires_grad = False
 dim_in = transfer_model.fc.in_features
-transfer_model.fc = nn.Linear(dim_in, img_classes)
+transfer_model.fc = nn.Linear(dim_in, 2)
 if use_gpu:
     transfer_model = transfer_model.cuda()
 
 # define optimize function and loss function
-optimizer = optim.SGD(transfer_model.parameters(), lr=1e-3, momentum=0.9)
+if fix_param:
+    optimizer = optim.Adam(transfer_model.fc.parameters(), lr=1e-3)
+else:
+    optimizer = optim.Adam(transfer_model.parameters(), lr=1e-3)
 criterion = nn.CrossEntropyLoss()
 
 # train
 num_epoch = 10
 
 for epoch in range(num_epoch):
-    print('{}/{}'.format(epoch+1, num_epoch))
-    print('*'*10)
+    print('{}/{}'.format(epoch + 1, num_epoch))
+    print('*' * 10)
     print('Train')
     transfer_model.train()
     running_loss = 0.0
@@ -80,8 +94,11 @@ for epoch in range(num_epoch):
     since = time.time()
     for i, data in enumerate(dataloader['train'], 1):
         img, label = data
-        img = Variable(img).cuda()
-        label = Variable(label).cuda()
+        if use_gpu:
+            img = img.cuda()
+            label = label.cuda()
+        img = Variable(img)
+        label = Variable(label)
 
         # forward
         out = transfer_model(img)
@@ -97,16 +114,13 @@ for epoch in range(num_epoch):
         num_correct = torch.sum(pred == label)
         running_acc += num_correct.data[0]
         if i % 100 == 0:
-            print('Loss: {:.6f}, Acc: {:.4f}'.format(
-                                            running_loss / (i * batch_size),
-                                            running_acc / (i * batch_size)))
+            print('Loss: {:.6f}, Acc: {:.4f}'.format(running_loss / (
+                i * batch_size), running_acc / (i * batch_size)))
     running_loss /= data_size['train']
     running_acc /= data_size['train']
     elips_time = time.time() - since
     print('Loss: {:.6f}, Acc: {:.4f}, Time: {:.0f}s'.format(
-                                                        running_loss,
-                                                        running_acc,
-                                                        elips_time))
+        running_loss, running_acc, elips_time))
     print('Validation')
     transfer_model.eval()
     num_correct = 0.0
@@ -122,10 +136,12 @@ for epoch in range(num_epoch):
         eval_loss += loss.data[0] * label.size(0)
         num_correct += (pred.cpu() == label.data.cpu()).sum()
         total += label.size(0)
-    print('Loss: {:.6f} Acc: {:.4f}'.format(eval_loss / total,
-                                            num_correct / total))
+    print('Loss: {:.6f} Acc: {:.4f}'.format(eval_loss / total, num_correct /
+                                            total))
     print()
 print('Finish Training!')
 print()
-save_path = os.path.join(root, 'resnet18.pth')
-torch.save(transfer_model.state_dict(), save_path)
+save_path = os.path.join(root, 'model_save')
+if not os.path.exists(save_path):
+    os.mkdir(save_path)
+torch.save(transfer_model.state_dict(), save_path + '/resnet18.pth')
